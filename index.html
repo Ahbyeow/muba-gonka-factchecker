@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Truthline — Multi-Model Fact Checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0F14;
+    --surface: #141B22;
+    --surface-2: #1B242D;
+    --text: #E8EDF2;
+    --muted: #5C6773;
+    --true: #3DDC97;
+    --false: #FF6B5E;
+    --mid: #F4B740;
+    --border: #232D37;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 48px 20px 80px;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(28px, 5vw, 40px);
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.5;
+    max-width: 52ch;
+  }
+
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 14px;
+    resize: vertical;
+    margin-bottom: 16px;
+  }
+
+  textarea:focus {
+    outline: 2px solid var(--true);
+    outline-offset: 1px;
+  }
+
+  textarea::placeholder { color: var(--muted); }
+
+  button {
+    background: var(--true);
+    color: #06120C;
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 12px 24px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  button:hover { transform: translateY(-1px); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+  .status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 12px;
+    min-height: 18px;
+  }
+
+  #results { display: none; }
+
+  .gauge-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 24px 20px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .gauge-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  svg#gauge { width: 220px; height: 130px; }
+
+  .gauge-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    margin-top: -8px;
+  }
+
+  .gauge-verdict {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .model-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+
+  .model-card.true-lean { border-left-color: var(--true); }
+  .model-card.false-lean { border-left-color: var(--false); }
+  .model-card.mid-lean { border-left-color: var(--mid); }
+
+  .model-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .model-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .model-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .model-reasoning {
+    font-size: 14px;
+    line-height: 1.55;
+    color: #C7D0D9;
+    margin-bottom: 10px;
+  }
+
+  .request-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .error-box {
+    background: #2A1418;
+    border: 1px solid var(--false);
+    color: #FFB3AC;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 14px;
+    display: none;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">MUBA Hacks 2026 · Gonka Track</div>
+      <h1>Truthline</h1>
+      <p class="sub">Paste a claim. Three independent models check it through GonkaRouter, and their scores are combined into one truth reading.</p>
+    </header>
+
+    <div class="input-card">
+      <textarea id="claimInput" placeholder="e.g. The Great Wall of China is visible from space with the naked eye."></textarea>
+      <button id="checkBtn" onclick="runCheck()">Check this claim</button>
+      <div class="status" id="statusText"></div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div id="results">
+      <div class="gauge-card">
+        <div class="gauge-label">Truth Score</div>
+        <svg id="gauge" viewBox="0 0 220 130">
+          <path d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="#232D37" stroke-width="14" stroke-linecap="round"/>
+          <path id="gaugeArc" d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="#3DDC97" stroke-width="14" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283"/>
+          <line id="needle" x1="110" y1="110" x2="110" y2="35" stroke="#E8EDF2" stroke-width="3" stroke-linecap="round" transform="rotate(-90 110 110)"/>
+          <circle cx="110" cy="110" r="6" fill="#E8EDF2"/>
+        </svg>
+        <div class="gauge-value" id="gaugeValue">—</div>
+        <div class="gauge-verdict" id="gaugeVerdict">Awaiting input</div>
+      </div>
+
+      <div id="modelResults"></div>
+    </div>
+  </div>
+
+<script>
+async function runCheck() {
+  const claim = document.getElementById('claimInput').value.trim();
+  const btn = document.getElementById('checkBtn');
+  const statusText = document.getElementById('statusText');
+  const errorBox = document.getElementById('errorBox');
+  const results = document.getElementById('results');
+
+  errorBox.style.display = 'none';
+  if (!claim) {
+    errorBox.textContent = 'Enter a claim before checking.';
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  statusText.textContent = 'Querying models through GonkaRouter…';
+  results.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/factcheck', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ claim })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `Request failed (${res.status})`);
+    }
+
+    const data = await res.json();
+    renderResults(data);
+    statusText.textContent = `Done — ${data.results.length} models queried.`;
+  } catch (err) {
+    errorBox.textContent = 'Something went wrong: ' + err.message;
+    errorBox.style.display = 'block';
+    statusText.textContent = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderResults(data) {
+  const results = document.getElementById('results');
+  const modelResults = document.getElementById('modelResults');
+  const gaugeValue = document.getElementById('gaugeValue');
+  const gaugeVerdict = document.getElementById('gaugeVerdict');
+  const gaugeArc = document.getElementById('gaugeArc');
+  const needle = document.getElementById('needle');
+
+  results.style.display = 'block';
+  modelResults.innerHTML = '';
+
+  const score = data.truth_score;
+
+  if (score === null || score === undefined) {
+    gaugeValue.textContent = 'N/A';
+    gaugeVerdict.textContent = 'No valid scores returned';
+  } else {
+    gaugeValue.textContent = Math.round(score) + '%';
+    let color = '#F4B740';
+    let verdict = 'Mixed / uncertain';
+    if (score >= 70) { color = '#3DDC97'; verdict = 'Likely true'; }
+    else if (score <= 30) { color = '#FF6B5E'; verdict = 'Likely false'; }
+
+    gaugeVerdict.textContent = verdict;
+    gaugeValue.style.color = color;
+    gaugeArc.setAttribute('stroke', color);
+
+    const circumference = 283;
+    const offset = circumference - (score / 100) * circumference;
+    gaugeArc.style.transition = 'stroke-dashoffset 0.8s ease';
+    gaugeArc.setAttribute('stroke-dashoffset', offset);
+
+    const angle = -90 + (score / 100) * 180;
+    needle.style.transition = 'transform 0.8s ease';
+    needle.setAttribute('transform', `rotate(${angle} 110 110)`);
+  }
+
+  data.results.forEach(r => {
+    const card = document.createElement('div');
+    let leanClass = 'mid-lean';
+    if (r.score !== null) {
+      if (r.score >= 70) leanClass = 'true-lean';
+      else if (r.score <= 30) leanClass = 'false-lean';
+    }
+    card.className = 'model-card ' + leanClass;
+
+    const scoreText = r.score !== null ? r.score + ' / 100' : 'no score';
+    const idText = r.request_id ? 'Request ID: ' + r.request_id : 'Request ID: n/a';
+
+    card.innerHTML = `
+      <div class="model-row">
+        <span class="model-name">${r.model}</span>
+        <span class="model-score">${scoreText}</span>
+      </div>
+      <div class="model-reasoning">${r.reasoning}</div>
+      <div class="request-id">${idText}</div>
+    `;
+    modelResults.appendChild(card);
+  });
+}
+</script>
+</body>
+</html>

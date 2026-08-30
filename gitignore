@@ -1,0 +1,14 @@
+# Environment variables / secrets — never commit these
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Vercel
+.vercel
+
+# OS files
+.DS_Store

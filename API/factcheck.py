@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler
 from openai import OpenAI
 
 client = OpenAI(
-    api_key=os.environ["GONKAROUTER_API_KEY"],
+    api_key=os.environ["sk-RcsRzbUbHNLw51arJYveY5GtviqjTJRT7LWM2CPxnthasGOT"],
     base_url="https://api.gonkarouter.io/v1",
 )
 
