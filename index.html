@@ -126,7 +126,16 @@
     padding: 28px 24px 20px;
     margin-bottom: 24px;
     text-align: center;
+    transition: padding 0.2s ease;
   }
+ 
+  .gauge-card.compact {
+    padding: 16px 24px 12px;
+  }
+ 
+  .gauge-card.compact svg#gauge { width: 130px; height: 78px; }
+  .gauge-card.compact .gauge-value { font-size: 24px; margin-top: -4px; }
+  .gauge-card.compact .gauge-label { margin-bottom: 4px; }
  
   .gauge-label {
     font-family: 'JetBrains Mono', monospace;
@@ -137,13 +146,14 @@
     margin-bottom: 12px;
   }
  
-  svg#gauge { width: 220px; height: 130px; }
+  svg#gauge { width: 220px; height: 130px; transition: width 0.2s ease, height 0.2s ease; }
  
   .gauge-value {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
     font-size: 40px;
     margin-top: -8px;
+    transition: font-size 0.2s ease;
   }
  
   .gauge-verdict {
@@ -153,32 +163,24 @@
     margin-top: 4px;
   }
  
-  .model-card {
+  .claim-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--muted);
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin-bottom: 14px;
+    border-left: 4px solid var(--muted);
+    border-radius: 14px;
+    padding: 22px 22px 18px;
+    margin-bottom: 20px;
   }
  
-  .model-card.true-lean { border-left-color: var(--true); }
-  .model-card.false-lean { border-left-color: var(--false); }
-  .model-card.mid-lean { border-left-color: var(--mid); }
+  .claim-card.true-lean { border-left-color: var(--true); }
+  .claim-card.false-lean { border-left-color: var(--false); }
+  .claim-card.mid-lean { border-left-color: var(--mid); }
  
-  .claim-header {
-    margin: 28px 0 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
- 
-  .claim-header:first-child { margin-top: 0; }
- 
-  .claim-header-row {
+  .claim-card-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
   }
  
   .claim-number {
@@ -189,21 +191,61 @@
     color: var(--muted);
   }
  
-  .claim-score-chip {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 3px 10px;
-    border: 1px solid;
-    border-radius: 999px;
+  .claim-big-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
   }
  
   .claim-text {
     font-family: 'Space Grotesk', sans-serif;
-    font-weight: 500;
-    font-size: 16px;
+    font-weight: 600;
+    font-size: 17px;
     line-height: 1.4;
+    margin-bottom: 10px;
   }
+ 
+  .claim-bar-track {
+    background: var(--bg);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+ 
+  .claim-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.8s ease;
+  }
+ 
+  .claim-verdict-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+ 
+  .claim-models {
+    padding-left: 14px;
+    border-left: 2px solid var(--border);
+  }
+ 
+  .model-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+ 
+  .model-card.true-lean { border-left-color: var(--true); }
+  .model-card.false-lean { border-left-color: var(--false); }
+  .model-card.mid-lean { border-left-color: var(--mid); }
  
   .model-row {
     display: flex;
@@ -372,6 +414,9 @@ function renderResults(data) {
   results.style.display = 'block';
   modelResults.innerHTML = '';
  
+  const gaugeCard = document.querySelector('.gauge-card');
+  gaugeCard.classList.toggle('compact', !!data.multi_claim);
+ 
   const disagreementBox = document.getElementById('disagreementBox');
   if (data.disagreement) {
     disagreementBox.textContent = data.multi_claim
@@ -385,7 +430,7 @@ function renderResults(data) {
   const gaugeLabel = document.querySelector('.gauge-label');
   const scopeText = data.source_url ? `from ${new URL(data.source_url).hostname}` : '';
   gaugeLabel.textContent = data.multi_claim
-    ? `Overall Truth Score — ${data.claims.length} claims ${scopeText}`.trim()
+    ? `Overall (average of ${data.claims.length} claims) ${scopeText}`.trim()
     : `Truth Score ${scopeText}`.trim();
  
   const score = data.truth_score;
@@ -416,51 +461,72 @@ function renderResults(data) {
   }
  
   data.claims.forEach((claimResult, index) => {
-    if (data.multi_claim) {
-      const header = document.createElement('div');
-      header.className = 'claim-header';
+    const cScore = claimResult.truth_score;
  
-      const cScore = claimResult.truth_score;
-      let chipColor = 'var(--mid)';
-      if (cScore !== null) {
-        if (cScore >= 70) chipColor = 'var(--true)';
-        else if (cScore <= 30) chipColor = 'var(--false)';
-      }
-      const chipText = cScore !== null ? Math.round(cScore) + '%' : 'N/A';
-      const warnText = claimResult.disagreement ? ' ⚠' : '';
- 
-      header.innerHTML = `
-        <div class="claim-header-row">
-          <span class="claim-number">Claim ${index + 1}</span>
-          <span class="claim-score-chip" style="color:${chipColor}; border-color:${chipColor}">${chipText}${warnText}</span>
-        </div>
-        <div class="claim-text">${claimResult.claim_text}</div>
-      `;
-      modelResults.appendChild(header);
+    let leanClass = 'mid-lean';
+    let barColor = 'var(--mid)';
+    let verdict = 'Mixed / uncertain';
+    if (cScore !== null) {
+      if (cScore >= 70) { leanClass = 'true-lean'; barColor = 'var(--true)'; verdict = 'Likely true'; }
+      else if (cScore <= 30) { leanClass = 'false-lean'; barColor = 'var(--false)'; verdict = 'Likely false'; }
     }
+    if (claimResult.disagreement) verdict = 'Models disagree';
+ 
+    const scoreText = cScore !== null ? Math.round(cScore) + '%' : 'N/A';
+    const barWidth = cScore !== null ? cScore : 0;
+ 
+    const claimCard = document.createElement('div');
+    claimCard.className = 'claim-card ' + leanClass;
+ 
+    const topRow = data.multi_claim
+      ? `<div class="claim-card-top">
+           <span class="claim-number">Claim ${index + 1} of ${data.claims.length}</span>
+           <span class="claim-big-score" style="color:${barColor}">${scoreText}</span>
+         </div>`
+      : `<div class="claim-card-top">
+           <span class="claim-number">Result</span>
+           <span class="claim-big-score" style="color:${barColor}">${scoreText}</span>
+         </div>`;
+ 
+    claimCard.innerHTML = `
+      ${topRow}
+      <div class="claim-text">${claimResult.claim_text}</div>
+      <div class="claim-bar-track">
+        <div class="claim-bar-fill" style="width:${barWidth}%; background:${barColor}"></div>
+      </div>
+      <div class="claim-verdict-row">
+        <span>${verdict}${claimResult.disagreement ? ' ⚠' : ''}</span>
+        <span>${claimResult.results.length} models</span>
+      </div>
+      <div class="claim-models"></div>
+    `;
+ 
+    const modelsContainer = claimCard.querySelector('.claim-models');
  
     claimResult.results.forEach(r => {
       const card = document.createElement('div');
-      let leanClass = 'mid-lean';
+      let modelLean = 'mid-lean';
       if (r.score !== null) {
-        if (r.score >= 70) leanClass = 'true-lean';
-        else if (r.score <= 30) leanClass = 'false-lean';
+        if (r.score >= 70) modelLean = 'true-lean';
+        else if (r.score <= 30) modelLean = 'false-lean';
       }
-      card.className = 'model-card ' + leanClass;
+      card.className = 'model-card ' + modelLean;
  
-      const scoreText = r.score !== null ? r.score + ' / 100' : 'no score';
+      const modelScoreText = r.score !== null ? r.score + ' / 100' : 'no score';
       const idText = r.request_id ? 'Request ID: ' + r.request_id : 'Request ID: n/a';
  
       card.innerHTML = `
         <div class="model-row">
           <span class="model-name">${r.model}</span>
-          <span class="model-score">${scoreText}</span>
+          <span class="model-score">${modelScoreText}</span>
         </div>
         <div class="model-reasoning">${r.reasoning}</div>
         <div class="request-id">${idText}</div>
       `;
-      modelResults.appendChild(card);
+      modelsContainer.appendChild(card);
     });
+ 
+    modelResults.appendChild(claimCard);
   });
 }
 </script>
