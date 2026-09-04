@@ -36,9 +36,24 @@ FACT_CHECK_PROMPT = """You are a fact-checking assistant. Assess the following c
 
 Content: "{claim}"
 
+Detect the language the content is written in, and write your Reasoning in that
+same language. Keep the words "Score:" and "Reasoning:" themselves in English exactly
+as shown below, since they are used to parse your response — only the reasoning
+sentences should be translated.
+
 Respond in exactly this format:
 Score: <a number from 0 to 100, where 100 means definitely true and 0 means definitely false>
-Reasoning: <2-3 sentences explaining your assessment>
+Reasoning: <2-3 sentences explaining your assessment, in the same language as the content>
+"""
+
+CLAIM_CHECK_PROMPT = """Look at the following content and decide if it contains at least
+one specific, checkable factual claim (something that could be true or false, like a
+statistic, event, or assertion about the world) — as opposed to being pure opinion,
+fiction, a recipe, or content with nothing factual to verify.
+
+Content: "{content}"
+
+Respond with exactly one word: YES or NO.
 """
 
 URL_PATTERN = re.compile(r"^https?://\S+$")
@@ -70,6 +85,18 @@ def extract_text_from_url(url: str) -> str:
         raise ValueError("No readable text found on that page.")
 
     return text[:MAX_EXTRACTED_CHARS]
+
+
+def has_checkable_claim(content: str) -> bool:
+    """One cheap model call to screen out content with nothing factual to check
+    (opinions, recipes, fiction, etc.) before running the full multi-model pipeline."""
+    response = client.chat.completions.create(
+        model=MODELS[0],
+        messages=[{"role": "user", "content": CLAIM_CHECK_PROMPT.format(content=content)}],
+    )
+    answer = response.choices[0].message.content
+    answer = re.sub(r"<think>.*?</think>", "", answer, flags=re.DOTALL).strip()
+    return answer.strip().upper().startswith("YES")
 
 
 def query_model(model_name: str, claim: str):
@@ -116,6 +143,22 @@ def run_fact_check(user_input: str):
                 "truth_score": None,
                 "error": f"Could not fetch or read that URL: {e}",
             }
+
+    try:
+        if not has_checkable_claim(content_to_check):
+            return {
+                "claim": user_input,
+                "source_url": source_url,
+                "results": [],
+                "truth_score": None,
+                "no_checkable_claim": True,
+                "error": "This content doesn't appear to contain a specific factual claim to check "
+                         "(it may be opinion, fiction, or something else with nothing to verify).",
+            }
+    except Exception:
+        # If the pre-check call itself fails, don't block the whole feature —
+        # just proceed to the full pipeline as normal.
+        pass
 
     results = []
     for model_name in MODELS:

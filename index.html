@@ -229,11 +229,11 @@
     <header>
       <div class="eyebrow">MUBA Hacks 2026 · Gonka Track</div>
       <h1>Truthline</h1>
-      <p class="sub">Paste a claim, or a URL to an article. Three independent models check it through GonkaRouter, and their scores are combined into one truth reading.</p>
+      <p class="sub">Paste a claim, or a URL to an article, in any language. Three independent models check it through GonkaRouter, and their scores are combined into one truth reading.</p>
     </header>
 
     <div class="input-card">
-      <textarea id="claimInput" placeholder="Paste a claim (e.g. The Great Wall of China is visible from space with the naked eye) — or paste a URL to an article."></textarea>
+      <textarea id="claimInput" placeholder="Paste a claim (e.g. The Great Wall of China is visible from space with the naked eye) — or paste a URL to an article. Any language works."></textarea>
       <button id="checkBtn" onclick="runCheck()">Check this claim</button>
       <div class="status" id="statusText"></div>
     </div>
@@ -267,6 +267,9 @@ async function runCheck() {
   const results = document.getElementById('results');
 
   errorBox.style.display = 'none';
+  errorBox.style.background = '#2A1418';
+  errorBox.style.border = '1px solid var(--false)';
+  errorBox.style.color = '#FFB3AC';
   if (!claim) {
     errorBox.textContent = 'Enter a claim before checking.';
     errorBox.style.display = 'block';
@@ -290,6 +293,16 @@ async function runCheck() {
     }
 
     const data = await res.json();
+
+    if (data.no_checkable_claim) {
+      errorBox.style.background = '#182420';
+      errorBox.style.border = '1px solid var(--muted)';
+      errorBox.style.color = '#B8C2CC';
+      errorBox.textContent = 'ℹ ' + data.error;
+      errorBox.style.display = 'block';
+      statusText.textContent = '';
+      return;
+    }
 
     if (data.error) {
       throw new Error(data.error);
