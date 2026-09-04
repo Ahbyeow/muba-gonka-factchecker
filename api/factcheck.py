@@ -132,11 +132,19 @@ def run_fact_check(user_input: str):
     valid_scores = [r["score"] for r in results if r["score"] is not None]
     truth_score = sum(valid_scores) / len(valid_scores) if valid_scores else None
 
+    # Flag disagreement: a wide score spread means models genuinely conflict,
+    # which is a different (and more important) signal than "uncertain"
+    DISAGREEMENT_THRESHOLD = 40
+    score_spread = max(valid_scores) - min(valid_scores) if len(valid_scores) >= 2 else 0
+    disagreement = score_spread > DISAGREEMENT_THRESHOLD
+
     return {
         "claim": user_input,
         "source_url": source_url,
         "results": results,
         "truth_score": truth_score,
+        "score_spread": score_spread,
+        "disagreement": disagreement,
     }
 
 
