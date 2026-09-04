@@ -18,9 +18,9 @@
     --mid: #F4B740;
     --border: #232D37;
   }
-
+ 
   * { box-sizing: border-box; }
-
+ 
   body {
     margin: 0;
     background: var(--bg);
@@ -29,16 +29,16 @@
     min-height: 100vh;
     padding: 48px 20px 80px;
   }
-
+ 
   .wrap {
     max-width: 720px;
     margin: 0 auto;
   }
-
+ 
   header {
     margin-bottom: 40px;
   }
-
+ 
   .eyebrow {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
@@ -47,7 +47,7 @@
     color: var(--muted);
     margin-bottom: 12px;
   }
-
+ 
   h1 {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
@@ -55,14 +55,14 @@
     margin: 0 0 8px;
     letter-spacing: -0.01em;
   }
-
+ 
   .sub {
     color: var(--muted);
     font-size: 15px;
     line-height: 1.5;
     max-width: 52ch;
   }
-
+ 
   .input-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -70,7 +70,7 @@
     padding: 24px;
     margin-bottom: 32px;
   }
-
+ 
   textarea {
     width: 100%;
     min-height: 100px;
@@ -84,14 +84,14 @@
     resize: vertical;
     margin-bottom: 16px;
   }
-
+ 
   textarea:focus {
     outline: 2px solid var(--true);
     outline-offset: 1px;
   }
-
+ 
   textarea::placeholder { color: var(--muted); }
-
+ 
   button {
     background: var(--true);
     color: #06120C;
@@ -104,11 +104,11 @@
     cursor: pointer;
     transition: transform 0.15s ease, opacity 0.15s ease;
   }
-
+ 
   button:hover { transform: translateY(-1px); }
   button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-
+ 
   .status {
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
@@ -116,9 +116,9 @@
     margin-top: 12px;
     min-height: 18px;
   }
-
+ 
   #results { display: none; }
-
+ 
   .gauge-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -127,7 +127,7 @@
     margin-bottom: 24px;
     text-align: center;
   }
-
+ 
   .gauge-label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
@@ -136,23 +136,23 @@
     color: var(--muted);
     margin-bottom: 12px;
   }
-
+ 
   svg#gauge { width: 220px; height: 130px; }
-
+ 
   .gauge-value {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
     font-size: 40px;
     margin-top: -8px;
   }
-
+ 
   .gauge-verdict {
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
     color: var(--muted);
     margin-top: 4px;
   }
-
+ 
   .model-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -161,11 +161,50 @@
     padding: 18px 20px;
     margin-bottom: 14px;
   }
-
+ 
   .model-card.true-lean { border-left-color: var(--true); }
   .model-card.false-lean { border-left-color: var(--false); }
   .model-card.mid-lean { border-left-color: var(--mid); }
-
+ 
+  .claim-header {
+    margin: 28px 0 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+ 
+  .claim-header:first-child { margin-top: 0; }
+ 
+  .claim-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+ 
+  .claim-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+ 
+  .claim-score-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border: 1px solid;
+    border-radius: 999px;
+  }
+ 
+  .claim-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+ 
   .model-row {
     display: flex;
     justify-content: space-between;
@@ -174,32 +213,32 @@
     flex-wrap: wrap;
     gap: 8px;
   }
-
+ 
   .model-name {
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
     font-size: 15px;
   }
-
+ 
   .model-score {
     font-family: 'JetBrains Mono', monospace;
     font-size: 14px;
     color: var(--muted);
   }
-
+ 
   .model-reasoning {
     font-size: 14px;
     line-height: 1.55;
     color: #C7D0D9;
     margin-bottom: 10px;
   }
-
+ 
   .request-id {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     color: var(--muted);
   }
-
+ 
   .error-box {
     background: #2A1418;
     border: 1px solid var(--false);
@@ -210,7 +249,7 @@
     display: none;
     margin-bottom: 20px;
   }
-
+ 
   .disagreement-box {
     background: #2A2010;
     border: 1px solid var(--mid);
@@ -231,16 +270,16 @@
       <h1>Truthline</h1>
       <p class="sub">Paste a claim, or a URL to an article, in any language. Three independent models check it through GonkaRouter, and their scores are combined into one truth reading.</p>
     </header>
-
+ 
     <div class="input-card">
       <textarea id="claimInput" placeholder="Paste a claim (e.g. The Great Wall of China is visible from space with the naked eye) — or paste a URL to an article. Any language works."></textarea>
       <button id="checkBtn" onclick="runCheck()">Check this claim</button>
       <div class="status" id="statusText"></div>
     </div>
-
+ 
     <div class="error-box" id="errorBox"></div>
     <div class="disagreement-box" id="disagreementBox"></div>
-
+ 
     <div id="results">
       <div class="gauge-card">
         <div class="gauge-label">Truth Score</div>
@@ -253,11 +292,11 @@
         <div class="gauge-value" id="gaugeValue">—</div>
         <div class="gauge-verdict" id="gaugeVerdict">Awaiting input</div>
       </div>
-
+ 
       <div id="modelResults"></div>
     </div>
   </div>
-
+ 
 <script>
 async function runCheck() {
   const claim = document.getElementById('claimInput').value.trim();
@@ -265,7 +304,7 @@ async function runCheck() {
   const statusText = document.getElementById('statusText');
   const errorBox = document.getElementById('errorBox');
   const results = document.getElementById('results');
-
+ 
   errorBox.style.display = 'none';
   errorBox.style.background = '#2A1418';
   errorBox.style.border = '1px solid var(--false)';
@@ -275,25 +314,25 @@ async function runCheck() {
     errorBox.style.display = 'block';
     return;
   }
-
+ 
   btn.disabled = true;
   statusText.textContent = 'Querying models through GonkaRouter…';
   results.style.display = 'none';
-
+ 
   try {
     const res = await fetch('/api/factcheck', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ claim })
     });
-
+ 
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       throw new Error(errData.error || `Request failed (${res.status})`);
     }
-
+ 
     const data = await res.json();
-
+ 
     if (data.no_checkable_claim) {
       errorBox.style.background = '#182420';
       errorBox.style.border = '1px solid var(--muted)';
@@ -303,13 +342,16 @@ async function runCheck() {
       statusText.textContent = '';
       return;
     }
-
+ 
     if (data.error) {
       throw new Error(data.error);
     }
-
+ 
     renderResults(data);
-    statusText.textContent = `Done — ${data.results.length} models queried.`;
+    const modelCount = data.claims.length * (data.claims[0]?.results.length || 0);
+    statusText.textContent = data.multi_claim
+      ? `Done — ${data.claims.length} claims checked, ${modelCount} model calls total.`
+      : `Done — ${data.claims[0]?.results.length || 0} models queried.`;
   } catch (err) {
     errorBox.textContent = 'Something went wrong: ' + err.message;
     errorBox.style.display = 'block';
@@ -318,7 +360,7 @@ async function runCheck() {
     btn.disabled = false;
   }
 }
-
+ 
 function renderResults(data) {
   const results = document.getElementById('results');
   const modelResults = document.getElementById('modelResults');
@@ -326,25 +368,28 @@ function renderResults(data) {
   const gaugeVerdict = document.getElementById('gaugeVerdict');
   const gaugeArc = document.getElementById('gaugeArc');
   const needle = document.getElementById('needle');
-
+ 
   results.style.display = 'block';
   modelResults.innerHTML = '';
-
+ 
   const disagreementBox = document.getElementById('disagreementBox');
   if (data.disagreement) {
-    disagreementBox.textContent = `⚠ Models disagree — scores span ${Math.round(data.score_spread)} points. Treat the average below with caution.`;
+    disagreementBox.textContent = data.multi_claim
+      ? `⚠ Models disagree on at least one claim below — check the flagged claim(s) for details.`
+      : `⚠ Models disagree on this claim — treat the average below with caution.`;
     disagreementBox.style.display = 'block';
   } else {
     disagreementBox.style.display = 'none';
   }
-
+ 
   const gaugeLabel = document.querySelector('.gauge-label');
-  gaugeLabel.textContent = data.source_url
-    ? `Truth Score — checked from ${new URL(data.source_url).hostname}`
-    : 'Truth Score';
-
+  const scopeText = data.source_url ? `from ${new URL(data.source_url).hostname}` : '';
+  gaugeLabel.textContent = data.multi_claim
+    ? `Overall Truth Score — ${data.claims.length} claims ${scopeText}`.trim()
+    : `Truth Score ${scopeText}`.trim();
+ 
   const score = data.truth_score;
-
+ 
   if (score === null || score === undefined) {
     gaugeValue.textContent = 'N/A';
     gaugeVerdict.textContent = 'No valid scores returned';
@@ -354,43 +399,68 @@ function renderResults(data) {
     let verdict = 'Mixed / uncertain';
     if (score >= 70) { color = '#3DDC97'; verdict = 'Likely true'; }
     else if (score <= 30) { color = '#FF6B5E'; verdict = 'Likely false'; }
-    if (data.disagreement) { verdict = 'Models disagree'; }
-
+    if (data.disagreement) { verdict = data.multi_claim ? 'Claims disputed' : 'Models disagree'; }
+ 
     gaugeVerdict.textContent = verdict;
     gaugeValue.style.color = color;
     gaugeArc.setAttribute('stroke', color);
-
+ 
     const circumference = 283;
     const offset = circumference - (score / 100) * circumference;
     gaugeArc.style.transition = 'stroke-dashoffset 0.8s ease';
     gaugeArc.setAttribute('stroke-dashoffset', offset);
-
+ 
     const angle = -90 + (score / 100) * 180;
     needle.style.transition = 'transform 0.8s ease';
     needle.setAttribute('transform', `rotate(${angle} 110 110)`);
   }
-
-  data.results.forEach(r => {
-    const card = document.createElement('div');
-    let leanClass = 'mid-lean';
-    if (r.score !== null) {
-      if (r.score >= 70) leanClass = 'true-lean';
-      else if (r.score <= 30) leanClass = 'false-lean';
+ 
+  data.claims.forEach((claimResult, index) => {
+    if (data.multi_claim) {
+      const header = document.createElement('div');
+      header.className = 'claim-header';
+ 
+      const cScore = claimResult.truth_score;
+      let chipColor = 'var(--mid)';
+      if (cScore !== null) {
+        if (cScore >= 70) chipColor = 'var(--true)';
+        else if (cScore <= 30) chipColor = 'var(--false)';
+      }
+      const chipText = cScore !== null ? Math.round(cScore) + '%' : 'N/A';
+      const warnText = claimResult.disagreement ? ' ⚠' : '';
+ 
+      header.innerHTML = `
+        <div class="claim-header-row">
+          <span class="claim-number">Claim ${index + 1}</span>
+          <span class="claim-score-chip" style="color:${chipColor}; border-color:${chipColor}">${chipText}${warnText}</span>
+        </div>
+        <div class="claim-text">${claimResult.claim_text}</div>
+      `;
+      modelResults.appendChild(header);
     }
-    card.className = 'model-card ' + leanClass;
-
-    const scoreText = r.score !== null ? r.score + ' / 100' : 'no score';
-    const idText = r.request_id ? 'Request ID: ' + r.request_id : 'Request ID: n/a';
-
-    card.innerHTML = `
-      <div class="model-row">
-        <span class="model-name">${r.model}</span>
-        <span class="model-score">${scoreText}</span>
-      </div>
-      <div class="model-reasoning">${r.reasoning}</div>
-      <div class="request-id">${idText}</div>
-    `;
-    modelResults.appendChild(card);
+ 
+    claimResult.results.forEach(r => {
+      const card = document.createElement('div');
+      let leanClass = 'mid-lean';
+      if (r.score !== null) {
+        if (r.score >= 70) leanClass = 'true-lean';
+        else if (r.score <= 30) leanClass = 'false-lean';
+      }
+      card.className = 'model-card ' + leanClass;
+ 
+      const scoreText = r.score !== null ? r.score + ' / 100' : 'no score';
+      const idText = r.request_id ? 'Request ID: ' + r.request_id : 'Request ID: n/a';
+ 
+      card.innerHTML = `
+        <div class="model-row">
+          <span class="model-name">${r.model}</span>
+          <span class="model-score">${scoreText}</span>
+        </div>
+        <div class="model-reasoning">${r.reasoning}</div>
+        <div class="request-id">${idText}</div>
+      `;
+      modelResults.appendChild(card);
+    });
   });
 }
 </script>

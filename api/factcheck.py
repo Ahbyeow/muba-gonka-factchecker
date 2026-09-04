@@ -56,6 +56,19 @@ Content: "{content}"
 Respond with exactly one word: YES or NO.
 """
 
+CLAIM_EXTRACTION_PROMPT = """Read the following content and extract up to 5 distinct,
+specific, checkable factual claims made in it — each one a self-contained sentence that
+could be verified true or false on its own, without needing the rest of the article for
+context. Skip opinions, predictions, and vague statements.
+
+Content: "{content}"
+
+Respond with ONLY a JSON array of strings, nothing else. Example format:
+["Claim one as a full sentence.", "Claim two as a full sentence."]
+
+If you genuinely cannot find any distinct checkable claims, respond with: []
+"""
+
 URL_PATTERN = re.compile(r"^https?://\S+$")
 
 # Keep the extracted text short enough to stay well within model context limits
@@ -99,6 +112,40 @@ def has_checkable_claim(content: str) -> bool:
     return answer.strip().upper().startswith("YES")
 
 
+# Below this length, treat input as a single claim rather than paying for an
+# extraction call — short direct claims (the common case) don't need splitting.
+MULTI_CLAIM_LENGTH_THRESHOLD = 300
+
+
+def extract_claims(content: str) -> list:
+    """Pull out up to 5 distinct checkable claims from longer content (e.g. an
+    article). Falls back to treating the whole thing as one claim if extraction
+    fails or the content is short enough not to need splitting."""
+    if len(content) < MULTI_CLAIM_LENGTH_THRESHOLD:
+        return [content]
+
+    try:
+        response = client.chat.completions.create(
+            model=MODELS[0],
+            messages=[{"role": "user", "content": CLAIM_EXTRACTION_PROMPT.format(content=content)}],
+        )
+        text = response.choices[0].message.content
+        text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+        # Models sometimes wrap JSON in a markdown code fence — strip that if present
+        text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())
+
+        claims = json.loads(text)
+        claims = [c.strip() for c in claims if isinstance(c, str) and c.strip()]
+
+        if not claims:
+            return [content]
+        return claims[:5]
+    except Exception:
+        # If extraction fails for any reason, fall back to checking the whole thing at once
+        return [content]
+
+
 def query_model(model_name: str, claim: str):
     prompt = FACT_CHECK_PROMPT.format(claim=claim)
 
@@ -127,43 +174,12 @@ def query_model(model_name: str, claim: str):
     }
 
 
-def run_fact_check(user_input: str):
-    source_url = None
-    content_to_check = user_input
-
-    if is_url(user_input):
-        source_url = user_input
-        try:
-            content_to_check = extract_text_from_url(user_input)
-        except Exception as e:
-            return {
-                "claim": user_input,
-                "source_url": user_input,
-                "results": [],
-                "truth_score": None,
-                "error": f"Could not fetch or read that URL: {e}",
-            }
-
-    try:
-        if not has_checkable_claim(content_to_check):
-            return {
-                "claim": user_input,
-                "source_url": source_url,
-                "results": [],
-                "truth_score": None,
-                "no_checkable_claim": True,
-                "error": "This content doesn't appear to contain a specific factual claim to check "
-                         "(it may be opinion, fiction, or something else with nothing to verify).",
-            }
-    except Exception:
-        # If the pre-check call itself fails, don't block the whole feature —
-        # just proceed to the full pipeline as normal.
-        pass
-
+def check_single_claim(claim_text: str) -> dict:
+    """Run the full 3-model cross-verification on one specific claim."""
     results = []
     for model_name in MODELS:
         try:
-            results.append(query_model(model_name, content_to_check))
+            results.append(query_model(model_name, claim_text))
         except Exception as e:
             results.append({
                 "model": model_name,
@@ -182,12 +198,62 @@ def run_fact_check(user_input: str):
     disagreement = score_spread > DISAGREEMENT_THRESHOLD
 
     return {
-        "claim": user_input,
-        "source_url": source_url,
+        "claim_text": claim_text,
         "results": results,
         "truth_score": truth_score,
         "score_spread": score_spread,
         "disagreement": disagreement,
+    }
+
+
+def run_fact_check(user_input: str):
+    source_url = None
+    content_to_check = user_input
+
+    if is_url(user_input):
+        source_url = user_input
+        try:
+            content_to_check = extract_text_from_url(user_input)
+        except Exception as e:
+            return {
+                "claim": user_input,
+                "source_url": user_input,
+                "claims": [],
+                "truth_score": None,
+                "error": f"Could not fetch or read that URL: {e}",
+            }
+
+    try:
+        if not has_checkable_claim(content_to_check):
+            return {
+                "claim": user_input,
+                "source_url": source_url,
+                "claims": [],
+                "truth_score": None,
+                "no_checkable_claim": True,
+                "error": "This content doesn't appear to contain a specific factual claim to check "
+                         "(it may be opinion, fiction, or something else with nothing to verify).",
+            }
+    except Exception:
+        # If the pre-check call itself fails, don't block the whole feature —
+        # just proceed to the full pipeline as normal.
+        pass
+
+    claim_list = extract_claims(content_to_check)
+
+    checked_claims = [check_single_claim(c) for c in claim_list]
+
+    claim_scores = [c["truth_score"] for c in checked_claims if c["truth_score"] is not None]
+    overall_truth_score = sum(claim_scores) / len(claim_scores) if claim_scores else None
+    overall_disagreement = any(c["disagreement"] for c in checked_claims)
+
+    return {
+        "claim": user_input,
+        "source_url": source_url,
+        "claims": checked_claims,
+        "truth_score": overall_truth_score,
+        "disagreement": overall_disagreement,
+        "multi_claim": len(checked_claims) > 1,
     }
 
 
