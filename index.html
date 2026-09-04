@@ -217,11 +217,11 @@
     <header>
       <div class="eyebrow">MUBA Hacks 2026 · Gonka Track</div>
       <h1>Truthline</h1>
-      <p class="sub">Paste a claim. Three independent models check it through GonkaRouter, and their scores are combined into one truth reading.</p>
+      <p class="sub">Paste a claim, or a URL to an article. Three independent models check it through GonkaRouter, and their scores are combined into one truth reading.</p>
     </header>
 
     <div class="input-card">
-      <textarea id="claimInput" placeholder="e.g. The Great Wall of China is visible from space with the naked eye."></textarea>
+      <textarea id="claimInput" placeholder="Paste a claim (e.g. The Great Wall of China is visible from space with the naked eye) — or paste a URL to an article."></textarea>
       <button id="checkBtn" onclick="runCheck()">Check this claim</button>
       <div class="status" id="statusText"></div>
     </div>
@@ -277,6 +277,11 @@ async function runCheck() {
     }
 
     const data = await res.json();
+
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
     renderResults(data);
     statusText.textContent = `Done — ${data.results.length} models queried.`;
   } catch (err) {
@@ -298,6 +303,11 @@ function renderResults(data) {
 
   results.style.display = 'block';
   modelResults.innerHTML = '';
+
+  const gaugeLabel = document.querySelector('.gauge-label');
+  gaugeLabel.textContent = data.source_url
+    ? `Truth Score — checked from ${new URL(data.source_url).hostname}`
+    : 'Truth Score';
 
   const score = data.truth_score;
 
