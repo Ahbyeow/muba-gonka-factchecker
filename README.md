@@ -112,12 +112,12 @@ Make sure `GONKAROUTER_API_KEY` is also set in your Vercel project's
 
 ## Team Members
 
-| Name | Role |
-|---|---|
-| Lew Jing Yuan| TP090232 |
-| Lee Chuen Jin | TP089620 |
-| Cheok Kin Fung | TP089654 |
-| Ryan Lim Yi Heng | TP088622 |
+| Name 
+|---|
+| Yeow Weai Huang| 
+| Tan Yao Wei | 
+| Lam Yu Yang | 
+
 
 ---
 
